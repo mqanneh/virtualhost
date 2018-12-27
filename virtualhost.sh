@@ -42,7 +42,7 @@ done
 
 while [ "$webRootDir" == "" ]
 do
-	echo -e $"Please provide web root directory. e.g. www, web, docroot"
+	echo -e $"Please provide web root directory. e.g. web, docroot"
 	read webRootDir
 done
 
@@ -72,43 +72,46 @@ if [ "$action" == 'create' ]
 			mkdir $rootDir/designs
 			mkdir $rootDir/docs
 			mkdir $rootDir/logs
-			mkdir $rootDir/$webRootDir
+			mkdir $rootDir/www
+			mkdir $rootDir/www/$webRootDir
 			### give permission to root dir
 			chmod 775 $rootDir
 			chmod 775 $rootDir/db_backups
 			chmod 775 $rootDir/designs
 			chmod 775 $rootDir/docs
 			chmod 775 $rootDir/logs
-			chmod 775 $rootDir/$webRootDir
+			chmod 775 $rootDir/www
+			chmod 775 $rootDir/www/$webRootDir
 			### write test file in the new domain dir
-			if ! echo "<?php echo phpinfo(); ?>" > $rootDir/$webRootDir/phpinfo.php
+			if ! echo "<?php echo phpinfo(); ?>" > $rootDir/www/$webRootDir/index.php
 			then
-				echo $"ERROR: Not able to write in file $rootDir/$webRootDir/phpinfo.php. Please check permissions"
+				echo $"ERROR: Not able to write in file $rootDir/www/$webRootDir/index.php. Please check permissions"
 				exit;
 			else
-				echo $"Added content to $rootDir/$webRootDir/phpinfo.php"
+				echo $"Added content to $rootDir/www/$webRootDir/index.php"
 			fi
 		fi
 
 		### create virtual host rules file
-		if ! echo "
-		<VirtualHost *:80>
-			ServerAdmin $email
-			ServerName $domain
-			ServerAlias $domain www.$domain
-			DocumentRoot $rootDir/$webRootDir
-			<Directory />
-				AllowOverride All
-			</Directory>
-			<Directory $rootDir/$webRootDir>
-				Options Indexes FollowSymLinks MultiViews
-				AllowOverride all
-				Require all granted
-			</Directory>
-			ErrorLog $rootDir/logs/error_log.log
-			LogLevel error
-			CustomLog $rootDir/logs/access_log.log combined
-		</VirtualHost>" > $sitesAvailable$domain.conf
+		if ! echo "<VirtualHost *:80>
+	ServerAdmin $email
+	ServerName $domain
+	ServerAlias $domain www.$domain
+	DocumentRoot $rootDir/www/$webRootDir
+	<Directory />
+		Options Indexes FollowSymLinks MultiViews
+		AllowOverride all
+		Require all granted
+	</Directory>
+	<Directory $rootDir/www/$webRootDir>
+		Options Indexes FollowSymLinks MultiViews
+		AllowOverride all
+		Require all granted
+	</Directory>
+	ErrorLog $rootDir/logs/error_log.log
+	LogLevel error
+	CustomLog $rootDir/logs/access_log.log combined
+</VirtualHost>" > $sitesAvailable$domain.conf
 		then
 			echo -e $"There is an ERROR creating $domain file"
 			exit;
@@ -117,7 +120,7 @@ if [ "$action" == 'create' ]
 		fi
 
 		### Add domain in /etc/hosts
-		if ! echo "127.0.0.1	$domain www.$domain\n" >> /etc/hosts
+		if ! echo "127.0.0.1	$domain www.$domain" >> /etc/hosts
 		then
 			echo $"ERROR: Not able to write in /etc/hosts"
 			exit;
